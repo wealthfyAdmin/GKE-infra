@@ -5,13 +5,29 @@ metadata:
   namespace: gateway-system
 spec:
   gatewayClassName: gke-l7-global-external-managed
+
   addresses:
     - type: NamedAddress
       value: solvox-gateway-ip
+
   listeners:
     - name: http
       port: 80
       protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+
+    # 🔐 HTTPS (TLS terminated using cert-manager secret)
+    - name: https
+      port: 443
+      protocol: HTTPS
+      hostname: api.cyberambassador.co.in
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: cyberambassador-tls
       allowedRoutes:
         namespaces:
           from: All
