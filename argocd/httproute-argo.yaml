@@ -7,7 +7,7 @@ spec:
   parentRefs:
     - name: solvox-gateway
       namespace: gateway-system
-      sectionName: https
+      sectionName: argo-https
 
   hostnames:
     - argo.solvox.ai
