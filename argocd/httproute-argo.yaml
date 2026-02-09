@@ -1,0 +1,56 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argo-https
+  namespace: argocd
+spec:
+  parentRefs:
+    - name: solvox-gateway
+      namespace: gateway-system
+      sectionName: https
+
+  hostnames:
+    - argo.solvox.ai
+
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+      filters:
+        # Request headers needed so Argo knows it is behind HTTPS
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            set:
+              - name: X-Forwarded-Proto
+                value: https
+              - name: X-Forwarded-Port
+                value: "443"
+
+        # Security headers (Argo-safe)
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            add:
+              - name: Strict-Transport-Security
+                value: "max-age=63072000; includeSubDomains; preload"
+
+              - name: X-Frame-Options
+                value: "DENY"
+
+              - name: X-Content-Type-Options
+                value: "nosniff"
+
+              - name: Referrer-Policy
+                value: "strict-origin-when-cross-origin"
+
+              - name: Permissions-Policy
+                value: "geolocation=(), microphone=(), camera=()"
+
+              #  DO NOT set strict CSP for ArgoCD UI
+              # If you add CSP here, login + UI WILL break
+
+      backendRefs:
+        - name: argocd-server
+          namespace: argocd
+          port: 80
